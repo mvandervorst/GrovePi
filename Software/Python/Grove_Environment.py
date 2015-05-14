@@ -157,6 +157,17 @@ def analog_max(it, a, wait):
 #------------------------------------------------------------------------
 debug=False
 
+# 4 digit LED
+# Connect the Grove 4 Digit Display to digital port D5
+# CLK,DIO,VCC,GND
+display = 5
+grovepi.pinMode(display,"OUTPUT")
+#print "Test 1) Initialise"
+grovepi.fourDigit_init(display)
+# set to lowest brightness level
+grovepi.fourDigit_brightness(display,0)
+
+
 b = barometer()  #  Grove I2C high precision barometer sensor on 0x76
 
 # Wait 2 minutes for the sensor to heat-up
@@ -249,6 +260,11 @@ while True:
         setRGB(0,0,0)
         
         setText("T:" + t + "C " + "Hum: " + h + "% " + "Gas: " + a + " raw")
+#       print "Test 9) Monitor analog pin"
+        seconds = 1
+        grovepi.fourDigit_monitor(display,air_sensor,seconds)
+
+        
         time.sleep(60.)  # about one sample per 2 minute
 
     except IOError:

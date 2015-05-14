@@ -1,5 +1,13 @@
-# GrovePi + Grove Chainable RGB LED
-# http://www.seeedstudio.com/wiki/Grove_-_Chainable_RGB_LED
+#!/usr/bin/env python
+#
+# GrovePi Example for using the Grove Chainable RGB LED (http://www.seeedstudio.com/wiki/Grove_-_Chainable_RGB_LED)
+#
+# The GrovePi connects the Raspberry Pi and Grove sensors.  You can learn more about GrovePi here:  http://www.dexterindustries.com/GrovePi
+#
+# Have a question about this example?  Ask on the forums here:  http://www.dexterindustries.com/forum/?forum=grovepi
+#
+# LICENSE: 
+# These files have been made available online through a [Creative Commons Attribution-ShareAlike 3.0](http://creativecommons.org/licenses/by-sa/3.0/) license.
 
 import time
 import grovepi
@@ -7,13 +15,13 @@ import grovepi
 # Connect first LED in Chainable RGB LED chain to digital port D7
 # In: CI,DI,VCC,GND
 # Out: CO,DO,VCC,GND
-chain = 7
+pin = 7
 
 # I have 10 LEDs connected in series with the first connected to the GrovePi and the last not connected
 # First LED input socket connected to GrovePi, output socket connected to second LED input and so on
-numleds = 10
+numleds = 10     #If you only plug 1 LED, change 10 to 1
 
-grovepi.pinMode(chain,"OUTPUT")
+grovepi.pinMode(pin,"OUTPUT")
 time.sleep(1)
 
 # Chainable RGB LED methods
@@ -366,6 +374,5 @@ try:
 except KeyboardInterrupt:
     # reset (all off)
     grovepi.chainableRgbLed_test(pin, numleds, testColorBlack)
-    break
 except IOError:
     print "Error"
