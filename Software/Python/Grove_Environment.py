@@ -5,7 +5,7 @@ import time
 import grovepi
 import math
 from grove_rgb_lcd import *
-from grove_barometer_lib import barometer
+from grove_barometer_lib import barometer  # lib copied from ./grove_barometer/basic
 
 
 #----------------------------------------------------------------------------
