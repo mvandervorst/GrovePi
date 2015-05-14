@@ -1,18 +1,9 @@
-#!/usr/bin/env python
-#
-# GrovePi Example for using the analog read command to read analog sensor values
-#
-# The GrovePi connects the Raspberry Pi and Grove sensors.  You can learn more about GrovePi here:  http://www.dexterindustries.com/GrovePi
-#
-# Have a question about this example?  Ask on the forums here:  http://www.dexterindustries.com/forum/?forum=grovepi
-#
-# LICENSE: 
-# These files have been made available online through a [Creative Commons Attribution-ShareAlike 3.0](http://creativecommons.org/licenses/by-sa/3.0/) license.
+#Grove Analog Read sensor example
 import time
 import grovepi
 
 #Sensor connected to A0 Port 
-sensor = 1
+sensor = 2
 grovepi.pinMode(sensor,"INPUT")
 while True:
     try:

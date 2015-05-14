@@ -1,27 +1,17 @@
-#!/usr/bin/env python
-#
-# GrovePi Example for using the Grove Rotary Angle Sensor (Potentiometer) and the Grove LED to create LED sweep
-#
-# Modules:
-#	 http://www.seeedstudio.com/wiki/Grove_-_Rotary_Angle_Sensor
-#	 http://www.seeedstudio.com/wiki/Grove_-_LED_Socket_Kit
-# The GrovePi connects the Raspberry Pi and Grove sensors.  You can learn more about GrovePi here:  http://www.dexterindustries.com/GrovePi
-#
-# Have a question about this example?  Ask on the forums here:  http://www.dexterindustries.com/forum/?forum=grovepi
-#
-# LICENSE: 
-# These files have been made available online through a [Creative Commons Attribution-ShareAlike 3.0](http://creativecommons.org/licenses/by-sa/3.0/) license.
+# GrovePi + Grove Rotary Angle Sensor (Potentiometer) + Grove LED
+# http://www.seeedstudio.com/wiki/Grove_-_Rotary_Angle_Sensor
+# http://www.seeedstudio.com/wiki/Grove_-_LED_Socket_Kit
 
 import time
 import grovepi
 
 # Connect the Grove Rotary Angle Sensor to analog port A0
 # SIG,NC,VCC,GND
-potentiometer = 0
+potentiometer = 1
 
 # Connect the LED to digital port D5
 # SIG,NC,VCC,GND
-led = 5
+led = 3
 
 grovepi.pinMode(potentiometer,"INPUT")
 grovepi.pinMode(led,"OUTPUT")
@@ -51,7 +41,7 @@ while True:
         brightness = int(degrees / full_angle * 255)
 
         # Give PWM output to LED
-        grovepi.analogWrite(led,brightness)
+        # grovepi.analogWrite(led,brightness)
 
         print "sensor_value =", sensor_value, " voltage =", voltage, " degrees =", degrees, " brightness =", brightness
 

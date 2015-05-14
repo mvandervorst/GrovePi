@@ -1,28 +1,17 @@
-#!/usr/bin/env python
-#
-# GrovePi Example for using the Grove Sound Sensor and the Grove LED
-#
-# The GrovePi connects the Raspberry Pi and Grove sensors.  You can learn more about GrovePi here:  http://www.dexterindustries.com/GrovePi
-#
-# Modules:
-#	 http://www.seeedstudio.com/wiki/Grove_-_Sound_Sensor
-#	 http://www.seeedstudio.com/wiki/Grove_-_LED_Socket_Kit
-#
-# Have a question about this example?  Ask on the forums here:  http://www.dexterindustries.com/forum/?forum=grovepi
-#
-# LICENSE: 
-# These files have been made available online through a [Creative Commons Attribution-ShareAlike 3.0](http://creativecommons.org/licenses/by-sa/3.0/) license.
+# GrovePi + Grove Sound Sensor + Grove LED
+# http://www.seeedstudio.com/wiki/Grove_-_Sound_Sensor
+# http://www.seeedstudio.com/wiki/Grove_-_LED_Socket_Kit
 
 import time
 import grovepi
 
 # Connect the Grove Sound Sensor to analog port A0
 # SIG,NC,VCC,GND
-sound_sensor = 0
+sound_sensor = 2
 
 # Connect the Grove LED to digital port D5
 # SIG,NC,VCC,GND
-led = 5
+led = 2
 
 grovepi.pinMode(sound_sensor,"INPUT")
 grovepi.pinMode(led,"OUTPUT")
