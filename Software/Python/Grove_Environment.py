@@ -49,9 +49,12 @@ def T_dew_point(T,RH):  # in degrees C  -30<T<35
   # Pst=a*math.exp(b*T/(c+T))  #  saturated water vapor pressure
   Pst = a*math.exp((b-T/d)*(T/(c+T)))
   Pat=(RH/100.)*Pst          #  water vapor presure
-  gam = math.log(Pat/a)
-  Tdp=c*gam/(b-gam)
-  return(Tdp)
+  if Pat > 0:
+    gam = math.log(Pat/a)
+    Tdp=c*gam/(b-gam)
+    return(Tdp)
+  else:
+    return(-T)
 
 def current_milliamps(it,pin_in,wait):
   amax=analog_max(it, pin_in, wait)
@@ -97,12 +100,16 @@ def analog_ave(it, a, wait):
   i=0
   ierr=0
   s=0.
+  tcall=0.
 #  print "raw_aiir_ave it, a, wait ", it, a,  wait
   while i<it and ierr<it:
     try:
         # Get sensor value from gas sensor
         time.sleep(wait)
+        t0=time.time()
         raw = grovepi.analogRead(a)
+        dt=time.time() - t0
+        tcall=tcall+dt
         s=s + raw
         i=i+1
 #       print "sum i ierr ", s, i, ierr
@@ -113,7 +120,9 @@ def analog_ave(it, a, wait):
 # end while
   if i>0:
       ave=s/i
-#     print "result s i", ave, s, i
+      tcall=tcall/i
+      # print "analog read time: ", tcall
+      # print "result s i", ave, s, i
       return(ave);
   else:
       return(-ierr)
@@ -131,7 +140,7 @@ def analog_max(it, a, wait):
   #print "analog_max it, a, wait ", it, a,  wait
   while i<it and ierr<it:
     try:
-        # Get sensor value from gas sensor
+        # Get sensor value from analog sensor
         # time.sleep(wait)
         raw = grovepi.analogRead(a)
         i=i+1
@@ -206,18 +215,22 @@ grovepi.pinMode(electricity_sensor,"INPUT")
 # Grove voltage divider sensor
 grovepi.pinMode(voltage_divider_sensor,"INPUT")
 
-lines_data=20
+lines_data=24
 lines=lines_data
 
 while True:
-    try:
+    humidity=-100.
+    while humidity < 0 :
+      try:
         [tempC,humidity] = grovepi.dht(digital_temp_humidity_sensor,1)
         temp=9./5.*tempC + 32.       # convert from C to F
-    except IOError:
+      except IOError:
         # print "dht Error"
         temp=-100.
         humidity=-100.
-    # end try
+      # end try
+      time.sleep(0.5)
+    # end while
     if debug:
       print "temp, humidity ",temp, humidity
     try:
