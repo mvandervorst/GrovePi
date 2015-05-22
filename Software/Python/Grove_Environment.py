@@ -183,8 +183,8 @@ b = barometer()  #  Grove I2C high precision barometer sensor on 0x76
 # Connect the MQ-8 H2 Sensor to analog port A0
 # SIG,NC,VCC,GND
 air_sensor = 0
-itair=50  # number of averaging iteration for air sensor
-wait=0.2 # seconds to wait between air sensor readings
+itair=10  # number of averaging iteration for air sensor
+wait=10 # seconds to wait between air sensor readings
 
 
 # Connect the Grove Electricy Sensor to analog port A1
@@ -278,7 +278,7 @@ while True:
         grovepi.fourDigit_monitor(display,air_sensor,seconds)
 
         
-        time.sleep(60.)  # about one sample per 2 minute
+        time.sleep(1.)  # about one sample per 2 minute
 
     except IOError:
         print "IOError in main loop"

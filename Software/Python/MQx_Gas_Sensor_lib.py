@@ -22,7 +22,7 @@
 import time
 import grovepi
 import math
-debug = False
+debug = True
 
 #*****************************Globals***********************************************/
 H2Curve = [2.3, 0.93,-1.44] # two points are taken from the curve in datasheet.
@@ -51,26 +51,28 @@ READ_SAMPLE_TIMES = 10     # define how many samples you are going to take in no
 RoH2 = 1.   # Calibration constant for H2 in clean air
 RawH2 = 100. # Average raw value in calabration for H2
 
-debug = False
-
-
+debug = True
 
 class MQxSensor(object):
-    print "MQxSensor ", object
     GasID="H2"
     SensorName="MQ8"
     Ro=RoH2
     ppm=-1.
     RawAve=-1.
 
-    def __init__(self,gasid,sensor_number=MQ_PIN, debug=False, Ro=RoH2, GasCurve=H2Curve,\
+    def __init__(self, gasid, sensor_number=MQ_PIN, Debug=False, Rload=RL_VALUE, \
+                 rawCleanAir=0, RoCleanAirFactor=RO_CLEAN_AIR_FACTOR, \
+                 Ro=RoH2, GasCurve=H2Curve,\
                  ReadWait=READ_SAMPLE_INTERVAL, \
                  ReadIter=READ_SAMPLE_TIMES, \
                  ReadWaitCal=CALIBRATION_SAMPLE_INTERVAL, \
                  ReadIterCal=CALIBRATION_SAMPLE_TIMES ):
        self.gasid = gasid       # e.g MQ8, but is arbitrary name
        self.pin = sensor_number # analog sensor number on GrovePI
-       self.debug = debug
+       self.debug = Debug
+       self.rload = Rload
+       self.rawCleanAir = rawCleanAir
+       self.RoCleanAirFactor = RoCleanAirFactor
        self.Ro = Ro
        self.GasCurve = GasCurve
        self.ReadWait = ReadWait
@@ -81,6 +83,8 @@ class MQxSensor(object):
            print self.gasid
            print self.pin
            print self.debug
+           print self.rload
+           print self.rawCleanAir
            print self.Ro
            print self.GasCurve
            print self.ReadWait
@@ -89,19 +93,23 @@ class MQxSensor(object):
          grovepi.pinMode(sensor_number,"INPUT")
        except IOError as e:
          print "__init error", e
+         
     def Calibrate(self):
      if self.debug: print "Calibrating sensor ", self.gasid
-     Ro = MQCalibration(self.pin, self.ReadIterCal, self.ReadWaitCal,RL_VALUE)  # mq_pin,itmax,wait,RLCalibrating the sensor. Please make sure the sensor is in clean air
-                                    # when you perform the calibration
-     self.Ro = Ro                            
-     if self.debug: print "Calibration H2 is done.  Ro= ", Ro , " kohm"
+     Ro, RawAve = MQCalibration(self.pin, self.rload, self.RoCleanAirFactor, \
+                                self.ReadIterCal, self.ReadWaitCal)
+     # Calibrating the sensor. Please make sure the sensor is in clean air
+     # when you perform the calibration
+     self.Ro = Ro
+     self.rawCleanAir = RawAve
+     if self.debug: print "Calibration is done.  Ro ", self.gasid," = ", Ro , " kohm, RawAve = ", RawAve
      time.sleep(1.)
 
     def ReadGas(self):
-       Gas = MQRead(self.pin)/self.Ro
-       Gas_ppm=MQGetGasPercentage(Gas)
+       rs_ro_ratio = MQRead(self.pin)/self.Ro
+       Gas_ppm=MQGetGasPercentage(rs_ro_ratio,self.GasCurve)
        self.Gas_ppm = Gas_ppm
-       if self.debug: print "Gas ", Self.GasId, ": ",self.Gas_ppm, " ppm"
+       if self.debug: print "Gas ", self.gasid, ": ",self.Gas_ppm, " ppm"
     time.sleep(10.)
 
 
@@ -113,10 +121,10 @@ class MQxSensor(object):
 #could be derived.
 #************************************************************************************/ 
 def MQinv(raw_adc):
-
-  Inv=float(RL_VALUE)*(1024.-float(raw_adc))/float(raw_adc)
+  voltage = float(raw_adc) / 1024. * 5.
+  Inv=float( (1024.-float(raw_adc))/float(raw_adc) )
   if debug:
-      print"MQinv, raw ", raw_adc, " Inv ", Res
+      print"MQinv, raw ", raw_adc, " Inv ", Inv
   return (Inv)
 
 # /***************************** MQCalibration ****************************************
@@ -127,25 +135,28 @@ def MQinv(raw_adc):
 # and then divides it with RO_CLEAN_AIR_FACTOR. RO_CLEAN_AIR_FACTOR is about
 # 10, which differs slightly between different sensors.
 #************************************************************************************/ 
-def MQCalibration(mq_pin,itmax,wait,RL):
+def MQCalibration(mq_pin,itmax,wait,RL,RoCleanAirFactor):
   val=0
   i=0
-  while i < itmax:  # take multiple samples
-    try:
-      raw=grovepi.analogRead(mq_pin)
-      val += MQinv(raw)
-      i+= 1
+  ierr=0
+  raw=-1;
+  if debug: print "MQCalibration mq_pin ", mq_pin
+  while raw < 0 and ierr < 5:
+    raw = analog_ave(itmax, mq_pin, wait)
+    if raw > 0:
+      val = RL*MQinv(raw)/RoCleanAirFactor
+    else:
+      if debug: print "MQCleanAirFactor IOError: "
       time.sleep(wait)
-    except IOError as e:
-      time.sleep(wait)
-      if debug: print "MQCalibration IOError: ", e
-    # end try
-  # end while
-  raw_ave = RL*val/itmax # calculate the average value
-  print "MQCalibration: raw ", raw_ave
-  val = raw_ave/RO_CLEAN_AIR_FACTOR #  divided by RO_CLEAN_AIR_FACTOR yields the Ro
+      ierr += 1
+      raw = -ierr
+      val=raw
+    #endif
+  #end while
+  if debug: print "MQCalibration: Val,raw ", val, raw
+  # val = raw_ave/RO_CLEAN_AIR_FACTOR #  divided by RO_CLEAN_AIR_FACTOR yields the Ro
                                     #  according to the chart in the datasheet
-  return(val)
+  return(val,raw)
 
 #****************** MQResistanceCalculation ****************************************
 #Input: raw_adc - raw value read from adc, which represents the voltage
@@ -210,13 +221,6 @@ def MQRead(mq_pin):
 # Remarks: This function passes different curves to the MQGetPercentage function which
 # calculates the ppm (parts per million) of the target gas.
 # ************************************************************************************/
-def MQGetGasPercentage(rs_ro_ratio, gas_id):
-
-    if debug:  print "MQGetGasPercentage, ratio ", rs_ro_ratio, " gas_id: ", gas_id
-    val=MQGetPercentage(rs_ro_ratio,H2Curve)
-    if debug: print"MQGetGasPercentage=", val 
-    return (val)
-
 # /***************************** MQGetPercentage **********************************
 # Input: rs_ro_ratio - Rs divided by Ro
 # pcurve - pointer to the curve of the target gas
@@ -226,7 +230,7 @@ def MQGetGasPercentage(rs_ro_ratio, gas_id):
 # logarithmic coordinate, power of 10 is used to convert the result to non-logarithmic
 # value.
 # ************************************************************************************/
-def MQGetPercentage(rs_ro_ratio, pcurve):
+def MQGetGasPercentage(rs_ro_ratio, pcurve):
 
   val=10.**(math.log(rs_ro_ratio-pcurve[1])/pcurve[2] + pcurve[0] )
 # val=10.**(math.log(rs_ro_ratio-H2Curve[1])/H2Curve[2] + H2Curve[0])
@@ -272,9 +276,9 @@ def analog_ave(it, a, wait):
 
 
 # test
-
-H2=MQxSensor("H2", 0, True)
-H2.Calibrate()
-H2.ReadGas()
-print "H2 ppm: ", H2.Gas_ppm
+if debug:
+  H2=MQxSensor("H2", 0, True)
+  H2.Calibrate()
+  H2.ReadGas()
+  print "H2 ppm: ", H2.Gas_ppm
 

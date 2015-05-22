@@ -15,32 +15,36 @@
 # Hydrogen properties by volume:
 #   Source: Wikipedia
 #  In air nominally 1 ppm = 1.e-4% = 1.e-6 volume fraction
-#    Can reach 50 ppm in closed enviroments such as submarines
+#    Can reach 100 ppm in closed enviroments such as submarines
 #  Explosive at 40,000 ppm = 4%
 
 import time
 import grovepi
 import math
 debug=False
-# ************************Hardware Related Macros************************************/
-MQ_PIN =0      # define which analog input channel you are going to use
-RL_VALUE= 10 # define the load resistance on the board, in kilo ohms
-RO_CLEAN_AIR_FACTOR= (10.) #  was 9.21,RO_CLEAR_AIR_FACTOR=(Sensor resistance in clean air)/RO,
-# which is derived from the chart in datasheet
-# ***********************Software Related Macros************************************/
-CALIBARAION_SAMPLE_TIMES = 60 # define how many samples you are going to take in the calibration phase
-CALIBRATION_SAMPLE_INTERVAL = 1.0 # //define the time interal(in milisecond) between each samples in the
-# cablibration phase
-READ_SAMPLE_INTERVAL = 0.5 # define how many samples you are going to take in normal operation
-READ_SAMPLE_TIMES = 5 # define the time interal(in milisecond) between each samples in
-# normal operation
-#**********************Application Related Macros**********************************/
-#define GAS_H2 (0)
 #*****************************Globals***********************************************/
 H2Curve = [2.3, 0.93,-1.44] # two points are taken from the curve in datasheet.
+#       = log(200), log[Rs/Ro(200ppm)], slope) where
+#   slope=(log[Rs/Ro(10000) - log[Rs/Ro(200)]/(log(10,000)-log(200))
+#        = (log(0.03) - 0.93)/(4 - 2.3) = -1.44
 # with these two points, a line is formed which is "approximately equivalent"
 # to the original curve.
 # data format:{ x, y, slope}; point1: (lg200, 0.47), point2: (lg10000, -0.92)
+# ************************Hardware Related Globals************************************/
+MQ_PIN = 0      # define which analog input channel you are going to use
+RL_VALUE= 10 # define the load resistance on the board, in kilo ohms
+# RO_CLEAN_AIR_FACTOR= (10.) #  was 9.21,RO_CLEAR_AIR_FACTOR=(Sensor resistance in clean air)/RO,
+RO_CLEAN_AIR_FACTOR= (10.3) #  was 9.21,RO_CLEAR_AIR_FACTOR=(Sensor resistance in clean air)/RO,
+# which is derived from the chart in datasheet
+# ***********************Software Related Macros************************************/
+CALIBARAION_SAMPLE_TIMES = 10 # define how many samples you are going to take in the calibration phase
+CALIBRATION_SAMPLE_INTERVAL = 10. # //define the time interal(in second) between each samples in the
+# cablibration phase
+READ_SAMPLE_INTERVAL = 10. # define the time interal(in milisecond) between each samples in
+READ_SAMPLE_TIMES = 10     # define how many samples you are going to take in normal operation
+# normal operation
+#**********************Application Related Macros**********************************/
+#define GAS_H2 (0)
 
 #****************** MQResistanceCalculation ****************************************
 #Input: raw_adc - raw value read from adc, which represents the voltage
@@ -78,11 +82,10 @@ def MQCalibration(mq_pin):
       if debug: print "MQCalibration IOError: ", e
     # end try
   # end while
-  val = val/CALIBARAION_SAMPLE_TIMES # calculate the average value
-
-  val = val/RO_CLEAN_AIR_FACTOR #  divided by RO_CLEAN_AIR_FACTOR yields the Ro
-                                #  according to the chart in the datasheet
-
+  raw_ave = val/CALIBARAION_SAMPLE_TIMES # calculate the average value
+  print "MQCalibration: raw ", raw_ave
+  val = raw_ave/RO_CLEAN_AIR_FACTOR #  divided by RO_CLEAN_AIR_FACTOR yields the Ro
+                                    #  according to the chart in the datasheet
   return(val)
 
 # /***************************** MQRead *********************************************
